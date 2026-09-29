@@ -1,44 +1,33 @@
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from pydantic import BaseModel
-
+from app.db import close_pool, create_pool
 from app.services.agent import Agent
-from app.services.memory import MemoryStore
+from app.services.embeddings import EmbeddingProvider
+from app.services.memory import PostgresMemoryStore
 from app.services.relationship import RelationshipEngine
-
-memory = MemoryStore()
-relationship = RelationshipEngine()
-agent = Agent(memory=memory, relationship=relationship)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await memory.connect()
+    pool = await create_pool()
+    app.state.db_pool = pool
+    app.state.memory = PostgresMemoryStore(pool, EmbeddingProvider())
+    app.state.relationship = RelationshipEngine()
+    app.state.agent = Agent(app.state.memory, app.state.relationship)
     yield
-    await memory.close()
-
+    await close_pool(pool)
 
 app = FastAPI(title="Companion X API", version="0.2.0", lifespan=lifespan)
-
 
 class ChatRequest(BaseModel):
     user_id: str
     message: str
 
-
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "companion-x"}
-
-
-@app.get("/health/memory")
-async def memory_health():
-    await memory.connect()
-    return {"status": "ok", "service": "memory", "backend": "postgresql+pgvector"}
-
+    await app.state.db_pool.fetchval("SELECT 1")
+    return {"status": "ok", "service": "companion-x", "memory": "postgres-pgvector"}
 
 @app.post("/v1/chat")
 async def chat(request: ChatRequest):
-    result = await agent.respond(request.user_id, request.message)
-    return result
+    return await app.state.agent.respond(request.user_id, request.message)
