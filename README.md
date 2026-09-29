@@ -2,34 +2,28 @@
 
 A production-oriented AI companion platform: persistent memory, relationship continuity, proactive behavior, realtime voice, and avatar-ready clients.
 
+## Current milestone
+
+The backend now uses PostgreSQL + pgvector for durable memory. Memory records survive API restarts and are retrieved with vector similarity, importance, and recency.
+
 ## Architecture
 
 User -> API -> Agent -> Memory / Relationship -> Planner -> Actions -> Voice / Avatar
-
-### Services
-
-- api: FastAPI HTTP/WebSocket boundary
-- agent: model-agnostic reasoning and tool orchestration
-- memory: durable user/event/episode/relationship memory
-- relationship: continuity, preferences, interaction state
-- proactive: scheduled/event-driven wakeups
-- voice: STT/TTS/realtime voice adapter boundary
-- avatar: Live2D/3D adapter boundary
-
-## First milestone
-
-The first commit intentionally contains interfaces and a runnable API skeleton rather than coupling the product to one model provider.
 
 ## Development
 
 Python 3.12+ is recommended.
 
-```bash
-cp .env.example .env
-docker compose up -d
-```
+1. Copy environment settings from .env.example to .env.
+2. Start PostgreSQL + pgvector and Redis with docker compose.
+3. Install the backend package.
+4. Start FastAPI.
 
-API health: `GET /health`
+Health endpoint: GET /health
+
+## Memory
+
+The memories table stores durable conversation/event/fact records and a 1536-dimensional vector. The EmbeddingProvider is an adapter boundary; the current local implementation is deterministic and dependency-free so development works without a model API key. It can later be replaced by a production embedding model without changing the memory API.
 
 ## Principles
 
