@@ -1,6 +1,6 @@
 [project]
 name = "companion-x"
-version = "0.1.0"
+version = "0.2.0"
 description = "Production-oriented AI companion backend"
 requires-python = ">=3.12"
 dependencies = [
@@ -8,7 +8,7 @@ dependencies = [
   "uvicorn[standard]>=0.30",
   "pydantic>=2.9",
   "pydantic-settings>=2.5",
-  "asyncpg>=0.29",
+  "asyncpg>=0.30",
 ]
 
 [tool.uv]
